@@ -1,0 +1,32 @@
+Command type is defined in cmd_index of cmd_request_t
+
+The cmd_index field has the following structure.
+
+---------------------------------
+| x | S | C | A | x | E | F | s |
+---------------------------------
+MSB   ------------------>     LSB
+
+s: start collection (1)
+F: change frequency
+x: reserved
+A: connect to Arduino (or in general external device via uart0
+C: callibration (0) or measurement (1)
+S: sensor 1 (0) or sensor 2 (1)
+E: error on cmd parameters (1)
+Valid commands:
+0x00: STOP
+0x01: start nm only using the default sampling rate
+0x02: change the sampling rate of nm
+0x03: start nm only using a user-defined sampling rate
+0x11: start nm+biofilm with sensor 1.
+0x12: change the sampling rate of the biofilm sensor only
+0x13: start nm+biofilm with sensor 1 using a user-defined sampling rate
+0x51: start nm+biofilm with sensor 2.
+0x53: start nm+biofilm with sensor 2 using a user-defined sampling rate
+
+0x30: get measurement from sensor 1 (on demand)
+0x70: get measurement from sensor 2 (on demand)
+
+0xFF: uart connection error code (for uplink)
+

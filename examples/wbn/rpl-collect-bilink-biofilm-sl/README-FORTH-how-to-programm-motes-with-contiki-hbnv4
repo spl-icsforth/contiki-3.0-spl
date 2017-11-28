@@ -1,0 +1,59 @@
+#######################################################################
+##README file for programming the sensor motes with the hbn-v4 release
+#######################################################################
+
+There are three types of applications and accompannying roles in the HBN network:
+1. the sink node (test-rpl-sink.c): this is the program for the mote connected to the mServer via the USB port. This program is compatible to sky motes only (TARGET=sky).
+Changes to make at the MAKEFILE in order to program a mote as a sink node:
+a. comment line 4 (use of uart0.c)
+b. change the value of the NODEID to 16 (line 44).
+c. comment line 56 (a mote connected to the bioflim sensor)
+d. ONLY FOR using with stardard output (e.g. login application of contiki, or serial terminal-alike): comment line 49. WHEN programming in order to use with the mServer application, please uncomment line 49.
+
+
+2. the sensor nodes (test-rpl-source.c): this is the program for the motes that are connected to the sensor modules.
+
+This program is compatible with xm1000 motes only.
+Changes to make at the MAKEFILE in order to program a mote as a source node connected to a biofilm sensor module (TARGET=xm1000):
+a. uncomment line 4 (use of uart0.c)
+b. change the value of the NODEID (line 44). Valid range of values is 1,2,..10.
+c. uncomment line 56 if the mote connected to the bioflim module. Comment line 56 if the mote is not connected to the biofilm module.
+
+
+3. the relay nodes (test-rpl-sky-relay.c): this is the program for the relay motes that are placed in designated areas in order to establish end-to-end connectivity between any pair of nodes.
+This program is compatible to both sky and xm1000 motes.
+Changes to make at the MAKEFILE in order to program a mote as a relay node (TARGET=xm1000 or sky):
+a. comment line 4 (use of uart0.c)
+b. change the value of the NODEID at line 44. Valid range of values is 11,12,..15.
+c. comment line 56.
+
+#########################################################################################
+PROGRAMMABLE PARAMETERS:
+1. Hardcoded change of sampling and transmission rate of the sensor nodes:
+Currently, the sensor modules are programmed to send a network packet every 10 mins and a biofilm packet (if this mode is enabled) every 1 hour. Relay nodes send a network packet every 30 mins. 
+
+2. Number of biofilm samples / measurement: this is defined in project-conf.h at line 56 and defines how many times the mote will ask for new data each time a new measurement phase is triggered. There exist a 2 minutes interval between successive samples. The current value of samples is 1.
+#define NNN 1 //change this if you want more measurements / sampling iteration.
+
+##########################################################################################
+NOTE: EACH TIME YOU MAKE A CHANGE ON THE MAKEFILE, YOU NEED TO CLEAN ALL OBJECTIVE / HEX FILES PRIOR UPLOADING THE NEW KERNEL TO A MOTE.
+###########################################################################################
+
+
+###########################################################################################
+HOW TO START / STOP DATA COLLECTION:
+There are two ways:
+1. From the mServer, by pressing the "START/STOP DATA COLLECTION" Button. This button has a toggle operation.
+2. Individually from each mote (both sensor and relays): By pressing the user button, you can start the data sampling and transmission. This holds also for those motes that are programmed to work with the biofilm sensor module. The motes stop their operation either when the reset button is pressed, or when they receive the stop command from the user / mServer. 
+
+NOTE: IF you dont start the data collection by either the mServer or the user-button, motes will remaing in a stand-by mode.
+
+############################################################################################
+##additional hardware / firmware needed for compiling and uploading:
+Expect for xm1000 motes, all firmware needed is included in this standalone release of the kernel. 
+
+This release has been developed and tested using native Ubuntu kernel (i.e. not InstantContiki). 
+
+
+
+
