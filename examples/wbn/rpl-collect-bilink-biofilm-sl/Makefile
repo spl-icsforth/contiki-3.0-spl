@@ -42,19 +42,19 @@ CFLAGS+= -DWITH_DL
 ###############################################################################
 #Set the ID of each node (currently: Sink->16, Sources:1-10, Relays: 11-15)
 #comment when testing at cooja:
-CFLAGS+= -DNODEID=11
+#CFLAGS+= -DNODEID=11
 
 ##for sink:
 #uncomment to write directly to serial port (no printf) for the data collection (Note: comment when testing at cooja)
 
-CFLAGS+= -DSERIAL_MODE
+#CFLAGS+= -DSERIAL_MODE
 #########################################################
 ##for connectivity with biofilm -
 #sensor1  - sensor2 
 #CFLAGS+= -DBFMODE1
 #CFLAGS+= -DBFMODE2
 #uncomment for connection with arduino pro - setting baudrate to 19200
-CFLAGS+= -DBIOFILM
+#CFLAGS+= -DBIOFILM
 ###############################################################################
 
 include $(CONTIKI)/Makefile.include

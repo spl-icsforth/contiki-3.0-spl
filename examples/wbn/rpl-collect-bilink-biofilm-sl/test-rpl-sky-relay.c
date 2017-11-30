@@ -420,7 +420,7 @@ PROCESS_THREAD(sensing_process, ev,data)
 
  	leds_on(LEDS_RED);	
     
-	send_interval = SEND_INTERVAL*100; //initial value: 10 minutes
+	send_interval = SEND_INTERVAL*1; //initial value: 10 minutes
 	isrunning = 0;
 	
 	standby: 

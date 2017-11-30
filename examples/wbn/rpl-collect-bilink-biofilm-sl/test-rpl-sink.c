@@ -143,7 +143,7 @@ tcpip_handler(void)
  // #endif
  // uint8_t seqno;
  // uint8_t hops;
- //int i;
+		int i;
   
   if(uip_newdata()) {
 	leds_toggle(LEDS_GREEN);

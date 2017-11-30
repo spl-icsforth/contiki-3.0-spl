@@ -501,8 +501,7 @@ PROCESS_THREAD(nm_common_process, ev, data)
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&period_timer));
      
-     //nf[cnt] = NETSTACK_RADIO.rssi();
-     nf[cnt] = cc2420_last_rssi();
+     nf[cnt] = cc2420_rssi();
      cnt=(cnt+1) % MAX_NF;     
 	 cnttot = (cnttot+1)% 255;
      
