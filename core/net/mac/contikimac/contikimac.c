@@ -248,6 +248,16 @@ static struct timer broadcast_rate_timer;
 static int broadcast_rate_counter;
 #endif /* CONTIKIMAC_CONF_BROADCAST_RATE_LIMIT */
 
+/* nancypan@FORTH-ICS */
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+#ifdef TRACE_ROUTE
+static void set_pck_rxcnt(uint16_t mac_pck_rx);
+static void set_pck_txcnt(uint16_t mac_pck_tx);
+static uint16_t mac_tottx_cnt = 0;
+static uint16_t mac_totrx_cnt = 0;
+#endif
+/*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
 /*---------------------------------------------------------------------------*/
 static void
 on(void)
@@ -505,6 +515,16 @@ send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
 #if WITH_PHASE_OPTIMIZATION
   rtimer_clock_t encounter_time = 0;
 #endif
+
+/**
+ * nancypan@FORTH-ICS
+ */
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#ifdef TRACE_ROUTE
+  static uint16_t mactxcnt=0;
+#endif
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
   int strobes;
   uint8_t got_strobe_ack = 0;
   int len;
@@ -683,6 +703,14 @@ send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
       int ret = NETSTACK_RADIO.transmit(transmit_len);
 #else
       NETSTACK_RADIO.transmit(transmit_len);
+#endif
+
+/**
+ * nancypan@FORTH-ICS
+ **/
+#ifdef TRACE_ROUTE
+      printf("tx cnt: *******%i*****\n",mactxcnt);
+      set_pck_txcnt(mactxcnt++);
 #endif
 
 #if RDC_CONF_HARDWARE_ACK
@@ -889,6 +917,16 @@ input_packet(void)
   original_dataptr = packetbuf_dataptr();
 #endif
 
+/**
+ * nancypan@FORTH-ICS
+*/
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#ifdef TRACE_ROUTE
+	static uint16_t macrxcnt=0;
+#endif
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
   if(!we_are_receiving_burst) {
     off();
   }
@@ -934,6 +972,16 @@ input_packet(void)
         mac_sequence_register_seqno();
       }
 #endif /* RDC_WITH_DUPLICATE_DETECTION */
+
+/**
+ * nancypan@FORTH-ICS
+ */
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#ifdef TRACE_ROUTE
+	  printf("rx cnt: *******%i*****\n",macrxcnt);
+	  set_pck_rxcnt(macrxcnt++);
+#endif
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 #if CONTIKIMAC_CONF_COMPOWER
       /* Accumulate the power consumption for the packet reception. */
@@ -1031,6 +1079,43 @@ duty_cycle(void)
 {
   return (1ul * CLOCK_SECOND * CYCLE_TIME) / RTIMER_ARCH_SECOND;
 }
+
+/**
+ * nancypan@FORTH-ICS
+ */
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#ifdef TRACE_ROUTE
+
+static void set_pck_txcnt(uint16_t mac_pck_tx){
+
+
+	mac_tottx_cnt = mac_pck_tx;
+
+
+}
+static void set_pck_rxcnt(uint16_t mac_pck_rx){
+
+	mac_totrx_cnt = mac_pck_rx;
+
+}
+
+static uint16_t get_pck_txcnt(int mac_pck_tx){
+
+
+	return mac_tottx_cnt;
+
+
+}
+static uint16_t get_pck_rxcnt(uint16_t mac_pck_rx){
+
+	return mac_totrx_cnt;
+
+}
+
+#endif
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
 /*---------------------------------------------------------------------------*/
 const struct rdc_driver contikimac_driver = {
   "ContikiMAC",
@@ -1041,6 +1126,17 @@ const struct rdc_driver contikimac_driver = {
   turn_on,
   turn_off,
   duty_cycle,
+
+  /**
+   * nancypan@FORTH-ICS
+   */
+   //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	#ifdef TRACE_ROUTE
+		get_pck_txcnt,
+		get_pck_rxcnt,
+	#endif
+   //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 };
 /*---------------------------------------------------------------------------*/
 uint16_t

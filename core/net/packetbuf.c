@@ -100,6 +100,30 @@ packetbuf_copyfrom(const void *from, uint16_t len)
   buflen = l;
   return l;
 }
+
+/**
+ *nancypan@FORTH-ICS 20130609
+ */
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+#if defined(TRACE_MESHROUTE_MESH) || defined(TRACE_MESHROUTE_COLLECT)
+int
+packetbuf_copydatafrom(const void *from, uint16_t len)
+{
+  uint16_t i;
+  uint8_t *tmp;
+
+  tmp = (uint8_t *)from;
+  for(i = 0; i < len ; ++i) {
+      packetbufptr[i+bufptr] = tmp[i];
+
+    }
+
+  return len;
+}
+#endif
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 /*---------------------------------------------------------------------------*/
 void
 packetbuf_compact(void)

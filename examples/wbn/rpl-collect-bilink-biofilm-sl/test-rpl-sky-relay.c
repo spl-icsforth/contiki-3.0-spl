@@ -424,7 +424,7 @@ PROCESS_THREAD(sensing_process, ev,data)
 	isrunning = 0;
 	
 	standby: 
-		PROCESS_WAIT_EVENT_UNTIL(ev == cmd_event || (ev == sensors_event && data == &button_sensor ));
+		//PROCESS_WAIT_EVENT_UNTIL(ev == cmd_event || (ev == sensors_event && data == &button_sensor ));
 	if (ev == cmd_event){	
 		memcpy(&incmd_req, data, sizeof(struct cmd_request_t));
 		//  printf("command now received: %d\n", incmd_req.cmd_index);
