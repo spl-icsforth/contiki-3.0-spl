@@ -47,18 +47,21 @@
 
 #define UDP_MOUT_PORT 1234
 
-
+//testing
+#define MAX_PAYLOAD_LEN		30
 
 
 #define UIP_IP_BUF   ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 #define CMD_TIMER 5*CLOCK_SECOND
 
-#define SEND_INTERVAL	6
+#define SEND_INTERVAL	1
 #define SEND_TIME		(random_rand() % (6*SEND_INTERVAL))
 
+/* DEFINE DEBUG  for print messages */
 
-//#define DEBUG DEBUG_PRINT
-//#include "net/uip-debug.h"
+#define DEBUG DEBUG_PRINT
+
+#include "net/ip/uip-debug.h"
 
 static struct uip_udp_conn *client_conn;
 static struct uip_udp_conn *c2c_conn;
@@ -131,7 +134,6 @@ struct sensor_datamsg msg;
 PROCESS(udp_client_process, "UDP client process");
 PROCESS(c2c_process, "C2C process");
 PROCESS(sensing_process, "Sensing process");
-//PROCESS(c2c_relay_process, "c2c relay process");
 
 
 #ifdef NM
@@ -227,12 +229,6 @@ void send_command_request(void *c)
 		uip_udp_packet_sendto(client_conn, msg, sizeof(struct cmd_request_t),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
 	}	
-	
-	//else {
-	//	printf("Unrecognized cmd index! Exiting...\n");
-	//}	
-
-	//	free(msg);
 }
 
 static void
@@ -260,6 +256,7 @@ collect_common_send(void)
 
   if(client_conn == NULL) {
     /* Not setup yet */
+	PRINTF("Connectiion is not setup yet/n");
     return;
   }
   
@@ -347,7 +344,7 @@ collect_common_send(void)
 		
 		//printf("ready to send!\n");
 		uip_udp_packet_sendto(client_conn, &data2send, sizeof(data2send),
-                        &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
+						&server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
 }
 
 
@@ -384,16 +381,21 @@ PROCESS_THREAD(udp_client_process, ev, data)
   client_conn = udp_new(NULL, UIP_HTONS(UDP_SERVER_PORT), NULL); 
   
   if(client_conn == NULL) {
-  //  PRINTF("No UDP connection available, exiting the process!\n");
+    PRINTF("No UDP connection available, exiting the process!\n");
     PROCESS_EXIT();
   }
   udp_bind(client_conn, UIP_HTONS(UDP_CLIENT_PORT)); 
 
+  /* Debug messages for the udp connection */
+
+  PRINTF("Created a connection with the server ");
+  PRINT6ADDR(&client_conn->ripaddr);
+  PRINTF(" local/remote port %u/%u\n",
+	UIP_HTONS(client_conn->lport), UIP_HTONS(client_conn->rport));
 
   while(1) {
     PROCESS_YIELD();
     if(ev == tcpip_event && uip_newdata() && UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 2] == SINK_ID) {
-     //ctimer_set(&ctimer, random_rand()*CLOCK_SECOND,tcpip_handler, NULL);//();
      tcpip_handler();
     }
     
@@ -433,11 +435,19 @@ PROCESS_THREAD(sensing_process, ev,data)
 		{
 		
 			leds_off(LEDS_RED);
-			//for memory space - to be removed when xm1000 are employed as relays...
-		//	if(rimeaddr_node_addr.u8[7]<=10) {
+			// if xm1000 are employed as relays uncomment the following
+			// for memory space - to be removed
+			/*if(linkaddr_node_addr.u8[7]<=10) 
+			{
+				SENSORS_ACTIVATE(light_sensor);
+				SENSORS_ACTIVATE(sht11_sensor);
+			}
+			SENSORS_ACTIVATE(battery_sensor); */
+			
+			//else use the following code
+
 			SENSORS_ACTIVATE(light_sensor);
 			SENSORS_ACTIVATE(sht11_sensor);
-		//	}
 			SENSORS_ACTIVATE(battery_sensor);
 		
 				
@@ -468,10 +478,9 @@ PROCESS_THREAD(sensing_process, ev,data)
 	
 		SENSORS_ACTIVATE(sht11_sensor);
 		SENSORS_ACTIVATE(battery_sensor);
+	
 	/**************UVEG MODIFICATIONS *********************/
-		
 		etimer_set(&periodic, send_interval*CLOCK_SECOND);
-		
 	/*****************************************************/
 			
 	
@@ -494,8 +503,7 @@ PROCESS_THREAD(sensing_process, ev,data)
 		
 				/**************UVEG MODIFICATIONS *********************/
 				//relays
-				etimer_set(&periodic, send_interval*CLOCK_SECOND);
-						
+				etimer_set(&periodic, send_interval*CLOCK_SECOND);		
 				isrunning = 1-isrunning;
 		
 	  }
@@ -548,10 +556,13 @@ PROCESS_THREAD(sensing_process, ev,data)
 	  else {
 	  if (isrunning) {	
 		
-		
+		//This function sends data!
 		getappdata();
-		
+		//Execution get passed this point
+
+		//message sequence number
 		msg.num = i++;
+
 		#ifdef NM
 			#ifdef TRACE_ROUTE
 				#ifdef TRACE_LQ
@@ -568,8 +579,8 @@ PROCESS_THREAD(sensing_process, ev,data)
 			#endif //TRACE_ROUTE
 		#endif //NM
         //for sending...
-        
 		ctimer_set(&backoff_timer, SEND_TIME, collect_common_send, NULL);
+
 		//and now reset the sampling timer
 		etimer_reset(&periodic);
 		
@@ -578,11 +589,20 @@ PROCESS_THREAD(sensing_process, ev,data)
 	 
 	}
 	}
-	//for memory space - to be removed when xm1000 are employed as relays...
-	//		if(rimeaddr_node_addr.u8[7]<=10) {
+	// when xm1000 are employed as relays uncomment the following code
+	// for memory space - to be removed
+
+	/*if(linkaddr_node_addr.u8[7]<=10) 
+	{
+		SENSORS_DEACTIVATE(light_sensor);
+		SENSORS_DEACTIVATE(sht11_sensor);
+	}
+	SENSORS_DEACTIVATE(battery_sensor);*/
+
+	//else use the following code
+
 	SENSORS_DEACTIVATE(light_sensor);
 	SENSORS_DEACTIVATE(sht11_sensor);
-//}
 	SENSORS_DEACTIVATE(battery_sensor);
 
 	PROCESS_END();
@@ -630,13 +650,9 @@ PROCESS_THREAD(c2c_process, ev, data)
 			memcpy(&appdata, (struct cmd_request_t *)data, sizeof(struct cmd_request_t));
 			ctimer_set(&ctimer, random_rand()%(10*CLOCK_SECOND), send_command_request, &appdata);
 			
-			}
-	
-			
-			
+			}		
 	}
 	  
-    
   PROCESS_END();
 }
 

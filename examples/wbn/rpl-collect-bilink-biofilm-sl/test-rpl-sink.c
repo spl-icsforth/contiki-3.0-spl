@@ -17,7 +17,7 @@
  * 					   2013-06-03: RSSI - LQI per packet added.	  
  * //convert to sensor_datamsg (look at test-udp-source for definition of data structure)
 	
-	 /*  msg->light1 = data2send[1]<< 8 | data2send[0];
+	    msg->light1 = data2send[1]<< 8 | data2send[0];
 		msg->light2 = data2send[3]<<8 | data2send[2];
 		msg->temp = data2send[5]<<8 | data2send[4];
 		msg->humm = data2send[7]<<8 | data2send[6];
@@ -74,6 +74,12 @@
 #define IN_SYNCH 1
 #define LEN_MIN 9
 #endif //WITH_DL
+
+/* DEFINE DEBUG  for print messages */
+
+#define DEBUG DEBUG_PRINT
+
+#include "net/ip/uip-debug.h"
 
 static struct uip_udp_conn *server_conn;
 PROCESS(udp_server_process, "UDP server process");
@@ -158,14 +164,12 @@ tcpip_handler(void)
     lqi = do_lqi();
     mynf = get_nf();
     
-	
 	 #ifdef NM	
 		txrxcounters=get_mac_counters();
 	 #endif	
     //this is the piece of rx data in uint8t format
     //this is the id of the sender (as defined in compile time).
     #ifndef SERIAL_MODE
-		printf("Data recv from %d:[", UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 2]);
         printf("192 %d %d ", UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 2], uip_datalen());
 		for (i=0;i<uip_datalen();i++)
 		{
@@ -304,9 +308,6 @@ static struct mac_counters get_mac_counters()
 //void send_command_request(struct cmd_request_t *cmd_msg, uip_ipaddr_t *destip)
 void send_command_request(struct cmd_request_t *aa, uip_ipaddr_t *destip)
 {
-	
-	
-
 	//convert cmd_request to packet buffer and send
 	//uip_ipaddr_t *destip = (uip_ipaddr_t *) c;	
 	const char *msg;//[sizeof(struct cmd_request_t)];
@@ -315,33 +316,20 @@ void send_command_request(struct cmd_request_t *aa, uip_ipaddr_t *destip)
 //	printf("\ncmd 2send: %d, %d, %d, %d",aa->cmd_type,
 //	aa->cmd_msn, aa->cmd_index, aa->htl);
 	msg = (const char *)aa;
-	
-	 
-	if (destip == NULL) {
-			
-	//this is a broadcast packet for everybody in my range.	
-		uip_create_linklocal_allnodes_mcast(&server_conn->ripaddr);
-		
+		 
+	if (destip == NULL) 
+	{		
+		//this is a broadcast packet for everybody in my range.	
+
+		uip_create_linklocal_allnodes_mcast(&server_conn->ripaddr);	
 		uip_udp_packet_send(server_conn, msg, sizeof(struct cmd_request_t));
-		uip_create_unspecified(&server_conn->ripaddr);
-		
+		uip_create_unspecified(&server_conn->ripaddr);	
 	}
 	else 
 	{
-
-		uip_udp_packet_sendto(server_conn, msg, sizeof(struct cmd_request_t), destip, UIP_HTONS(UDP_CLIENT_PORT));
-		
-		
-	}
-	
-//	printf("ppppp\n");
-	//free(msg);
-		
-	
+		uip_udp_packet_sendto(server_conn, msg, sizeof(struct cmd_request_t), destip, UIP_HTONS(UDP_CLIENT_PORT));	
+	}	
 }
-
-
-
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 #endif
 #endif
@@ -359,7 +347,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
   
 
- // PRINTF("UDP server started\n");
+  PRINTF("UDP server started\n");
 
 #if UIP_CONF_ROUTER
   uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, SINK_ID);
@@ -369,44 +357,52 @@ PROCESS_THREAD(udp_server_process, ev, data)
   
   root_if = uip_ds6_addr_lookup(&ipaddr);
   
-  if(root_if != NULL) {
+  if(root_if != NULL) 
+  {
     rpl_dag_t *dag;
     dag = rpl_set_root(RPL_DEFAULT_INSTANCE,(uip_ip6addr_t *)&ipaddr);
     uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
     rpl_set_prefix(dag, &ipaddr, 64);
- //   PRINTF("created a new RPL dag\n");
+    PRINTF("created a new RPL dag\n");
     
   } 
-	//else {
-   // PRINTF("failed to create a new RPL DAG\n");
-  //}
+  else 
+  {
+	  PRINTF("failed to create a new RPL DAG\n");\
+  }
   
 #endif /* UIP_CONF_ROUTER */
-
-  
 
   /* The data sink runs with a 100% duty cycle in order to ensure high
      packet reception rates. */
   NETSTACK_RDC.off(1);
 
   server_conn = udp_new(NULL, UIP_HTONS(UDP_CLIENT_PORT), NULL);
+  if (server_conn == NULL)
+  {
+	  printf("No UDP connection available, exiting PROCESS");
+	  PROCESS_EXIT();
+  }
   udp_bind(server_conn, UIP_HTONS(UDP_SERVER_PORT));
+  
+  // Debug messages for udp connection
 
-
- // PRINTF("Created a server connection with remote address ");
- // PRINT6ADDR(&server_conn->ripaddr);
-//  PRINTF(" local/remote port %u/%u\n", UIP_HTONS(server_conn->lport),
- //        UIP_HTONS(server_conn->rport));
+  PRINTF("Created a server connection with remote address ");
+  PRINT6ADDR(&server_conn->ripaddr);
+  PRINTF(" local/remote port %u/%u\n", UIP_HTONS(server_conn->lport),
+         UIP_HTONS(server_conn->rport));
          
   
   
-  while(1) {
-    PROCESS_YIELD();
-    if(ev == tcpip_event) {
-	  nm_input();
-      tcpip_handler();
-    } 
-    }
+  while(1) 
+  {
+	PROCESS_YIELD();
+	if(ev == tcpip_event)
+	{
+		nm_input();
+		tcpip_handler();
+	}
+  }
   
 
   PROCESS_END();
@@ -483,6 +479,8 @@ void process_incoming_packet(char *incoming_packet, uint8_t size)
 	
 	//241: the index of a CMD_REQUEST from MServer(hardcoded)
 	//242: the index of a CMD_Indication from Gateway via MServer
+
+
 	if (tmp[3] != 241 && tmp[3] !=242) {
 		
 		return;

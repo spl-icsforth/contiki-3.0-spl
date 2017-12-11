@@ -280,7 +280,7 @@ const struct radio_driver cc2420_driver =
     get_value,
     set_value,
     get_object,
-    set_object
+    set_object,
   };
 
 /*---------------------------------------------------------------------------*/

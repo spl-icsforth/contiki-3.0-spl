@@ -9,7 +9,7 @@ CONTIKI = ../../..
 CFLAGS += -DPROJECT_CONF_H=\"project-conf.h\"
 ########################################################################
 
-WITH_UIP6=1
+CONTIKI_WITH_UIP6=1
 UIP_CONF_IPV6=1
 
 CFLAGS+= -DUIP_CONF_IPV6_RPL
@@ -37,7 +37,7 @@ CONTIKI_SOURCEFILES += nullrdc_dl.c
 
 ##unocomment to activate downlink communication...
 CFLAGS+= -DWITH_DL
-#TARGET_LIBFILES += -lm
+TARGET_LIBFILES += -lm
 #########################################################
 ###############################################################################
 #Set the ID of each node (currently: Sink->16, Sources:1-10, Relays: 11-15)
@@ -58,4 +58,3 @@ CFLAGS+= -DWITH_DL
 ###############################################################################
 
 include $(CONTIKI)/Makefile.include
-
