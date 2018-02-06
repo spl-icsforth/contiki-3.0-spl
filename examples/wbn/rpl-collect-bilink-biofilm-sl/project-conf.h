@@ -42,8 +42,7 @@
 #define PROJECT_CONF_H_
 
 
-//********************FORTH Modifications
-//start:<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+/********************FORTH Modifications nancy pan********************/
 //#define N 1 //number of measurements per sampling iteration.
 #define NETSTACK_CONF_RDC      nullrdc_dl_driver
 #define NET_SIZE 16 //total!

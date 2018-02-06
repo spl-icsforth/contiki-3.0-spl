@@ -47,14 +47,10 @@
 
 #define UDP_MOUT_PORT 1234
 
-//testing
-#define MAX_PAYLOAD_LEN		30
-
-
 #define UIP_IP_BUF   ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 #define CMD_TIMER 5*CLOCK_SECOND
 
-#define SEND_INTERVAL	1
+#define SEND_INTERVAL	6
 #define SEND_TIME		(random_rand() % (6*SEND_INTERVAL))
 
 /* DEFINE DEBUG  for print messages */
@@ -84,20 +80,19 @@ struct sensor_datamsg{
 		#endif //TRACE_LQ
 	
 		uint16_t route_trace[2]; //this contains route-specific details	
-		
 	#endif //TRACE_ROUTE
 		uint8_t node_tx_counter;
 		uint16_t listaddr;
 		uint8_t node_rx_counter[MAX_NEIGHS];
 	#endif //NM
-	uint16_t light1;
-	uint16_t light2;
-	uint16_t temp;
-	uint16_t humm;
-	uint16_t battery_level;
-	uint16_t ptx; //transmission power.
-	uint16_t noise_level; //mean accross all channels or per specific channel of transmission.	
-	uint16_t num;
+	uint16_t light1;        //light sensor
+	uint16_t light2;        //light infared
+	uint16_t temp;          //temperature
+	uint16_t humm;          //hummidity
+	uint16_t battery_level; //battery_level
+	uint16_t ptx;           //transmission power.
+	uint16_t noise_level;   //mean accross all channels or per specific channel of transmission. //source node! noise floor	
+	uint16_t num; 		    //message sequence number
 
 	
 }sensor_datamsg;
@@ -153,16 +148,16 @@ tcpip_handler(void)
   if(uip_newdata()) {
 	  
 	
-	  //if a receive a command_request with an msn that i have replied to before or with hop counter == 0, ignore 
+	//if a receive a command_request with an msn that i have replied to before or with hop counter == 0, ignore 
     /* Ignore incoming data */
     //else 
    
     uint8_t i;
-     uint8_t *cmd_type;
+    uint8_t *cmd_type;
 	struct cmd_request_t *appdata2;
 //	struct ctimer ctimer;
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */ 
-  
+
     cmd_type = (uint8_t *)uip_appdata;
     if (cmd_type[0] >240 && uip_datalen() == sizeof(struct cmd_request_t))
     {
@@ -253,7 +248,6 @@ collect_common_send(void)
    static int ii,j,k;
    static uint8_t data2send[sizeof(sensor_datamsg)];
 
-
   if(client_conn == NULL) {
     /* Not setup yet */
 	PRINTF("Connectiion is not setup yet/n");
@@ -340,9 +334,24 @@ collect_common_send(void)
 		data2send[ii+14] = msg.num & 0xFF;
 		data2send[ii+15] = msg.num >> 8;
 		
-	
-		
 		//printf("ready to send!\n");
+		/*--------Print some values for TESTING---------*/
+
+		/*print the decimal of data2send
+		printf("listaddr: %d", msg.listaddr);
+		printf("%d %d %d %d %d %d %d %d \n", msg.light1, msg.light2, msg.temp, msg.humm, msg.battery_level, msg.ptx, msg.noise_level, msg.num);
+
+		uint8_t *appdata;
+		int my_counter;
+	    appdata = &data2send;
+		
+		for (my_counter=0; my_counter < sizeof(sensor_datamsg); my_counter++)
+		{
+			printf("%d ",appdata[my_counter]);
+		}
+		printf("\n");*/
+
+		/*--------End of Print---------*/
 		uip_udp_packet_sendto(client_conn, &data2send, sizeof(data2send),
 						&server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
 }
@@ -426,7 +435,7 @@ PROCESS_THREAD(sensing_process, ev,data)
 	isrunning = 0;
 	
 	standby: 
-		//PROCESS_WAIT_EVENT_UNTIL(ev == cmd_event || (ev == sensors_event && data == &button_sensor ));
+	//PROCESS_WAIT_EVENT_UNTIL(ev == cmd_event || (ev == sensors_event && data == &button_sensor ));
 	if (ev == cmd_event){	
 		memcpy(&incmd_req, data, sizeof(struct cmd_request_t));
 		//  printf("command now received: %d\n", incmd_req.cmd_index);
@@ -556,9 +565,8 @@ PROCESS_THREAD(sensing_process, ev,data)
 	  else {
 	  if (isrunning) {	
 		
-		//This function sends data!
+		//This function gets data from sensor
 		getappdata();
-		//Execution get passed this point
 
 		//message sequence number
 		msg.num = i++;

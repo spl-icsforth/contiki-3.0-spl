@@ -57,6 +57,7 @@ static uint8_t get_meannf();
 
 
 //2013-11-27 nancy @ FORTH-ICS
+#define UIP_IP_BUF   ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 
 #define MAX_NF 5
 static uint8_t cnt;
@@ -82,7 +83,6 @@ void update_uip6pck(int nwk_header)
 	
 //	if (UIP_IP_BUF->proto == UIP_PROTO_UDP) - in contrast to ipv4 (uip-over-rime)
 //	{
-	
 		#ifdef TRACE_LQ
 			uint16_t route_link[MAX_NEIGHS-2];
 			uint8_t route_nf[MAX_NEIGHS-2];
@@ -100,14 +100,13 @@ void update_uip6pck(int nwk_header)
 		route_link[j] = uip_buf[UIP_IPUDPH_LEN+i+nwk_header+1] <<8 | uip_buf[UIP_IPUDPH_LEN+i+nwk_header];
 		j++;
 	}
-	
+	//printf("\n");
 	j=0;
 	for (i=(MAX_NEIGHS-2)*2;i<(MAX_NEIGHS-2)*3;i++)
 	{
 		route_nf[j] = uip_buf[UIP_IPUDPH_LEN+i+nwk_header];
 		j++;
 	}
-	
 	j=0;
 	for (i=(MAX_NEIGHS-2)*3;i<(MAX_NEIGHS-2)*3+TRACEROUTE_LEN*2;i=i+2)
 	{
@@ -162,7 +161,7 @@ void update_uip6pck(int nwk_header)
 	
 		while (i<TRACEROUTE_LEN)	{
 			if (trace_route[i] < 1111){
-			//    printf("about to add to route: %d - to route:%d\n", uip_lladdr.addr[5], trace_route[i]);	
+			    //printf("about to add to route: %d - to route:%d\n", uip_lladdr.addr[5], trace_route[i]);	
 				route_flag = 1;
 				break;
 			}
@@ -208,7 +207,9 @@ void update_uip6pck(int nwk_header)
 				
 			}	
 		}
+
 		//printf("added to route: %d - now route is:%d\n", uip_lladdr.addr[5], trace_route[i]);
+
 		//put it back to the uip_buf
 		j= 0;
 		#ifdef TRACE_LQ
@@ -234,14 +235,14 @@ void update_uip6pck(int nwk_header)
 			j++;
 			
 	    }
+		
 		#else
 		for (i=UIP_IPUDPH_LEN+nwk_header;i<UIP_IPUDPH_LEN+nwk_header+TRACEROUTE_LEN*2;i=i+2) {
 			uip_buf[i] = trace_route[j] >> 8; //msb
 			uip_buf[i+1] = trace_route[j] & 0xff; //lsb
-			j++;
-			
+			j++;		
 	    }
-	    #endif //TRACE_LQ
+		#endif //TRACE_LQ
 //	}
 	
  
@@ -271,7 +272,7 @@ static uint8_t get_meannf()
 		
 		}
   	
-	//	printf("%i,%i,%i***%i%%%%%i\n", cnttot,k,cnt, tmp, tmp/j);
+		//printf("%i,%i,%i***%i%%%%%i\n", cnttot,k,cnt, tmp, tmp/j);
 		if (j>0) {
 			tmp = (int) tmp / j;
 			return tmp & 0xff;
@@ -301,6 +302,7 @@ void nm_input()
 //2014-05-08
 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
 if (linkaddr_node_addr.u8[7] != SINK_ID){
 
 
@@ -309,10 +311,8 @@ if (linkaddr_node_addr.u8[7] != SINK_ID){
 //this is the application payload size. The overhead of the rest of the layers is 48 bytes
 	if (uip_len - (UIP_IPUDPH_LEN + uip_ext_len) > 65) 
 	{
-			
-		//	printf("this is a longgggg packet.....\n");
-			 
-			return;
+		//printf("this is a longgggg packet.....\n");
+		return;
 		
 	}
 #ifndef TRACE_LQ

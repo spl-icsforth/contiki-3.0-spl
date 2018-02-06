@@ -37,7 +37,7 @@ CONTIKI_SOURCEFILES += nullrdc_dl.c
 
 ##unocomment to activate downlink communication...
 CFLAGS+= -DWITH_DL
-TARGET_LIBFILES += -lm
+#TARGET_LIBFILES += -lm
 #########################################################
 ###############################################################################
 #Set the ID of each node (currently: Sink->16, Sources:1-10, Relays: 11-15)

@@ -292,7 +292,12 @@ main(int argc, char **argv)
   node_id = TOS_NODE_ID;
 #else /* WITH_TINYOS_AUTO_IDS */
   /* Restore node id if such has been stored in external mem */
-  node_id_restore();
+  //2013-09-04 nancy@forth-ics
+  #ifdef NODEID
+    node_id = NODEID
+  #else
+    node_id_restore();
+  #endif
 #endif /* WITH_TINYOS_AUTO_IDS */
 
   /* for setting "hardcoded" IEEE 802.15.4 MAC addresses */

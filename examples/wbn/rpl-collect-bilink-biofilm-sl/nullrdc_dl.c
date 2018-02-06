@@ -110,11 +110,11 @@
 
 /***********************FORTH Modifications**************************/
 #ifdef NM
-#include "rdc.h"
-#include "lib/list.h"
-#include "lib/memb.h"
-#ifndef PERIOD
-#define PERIOD 5
+  #include "rdc.h"
+  #include "lib/list.h"
+  #include "lib/memb.h"
+  #ifndef PERIOD
+    #define PERIOD 5
 #endif
 void set_tx_counter(uint8_t tx_counter);
 void set_rx_counter();
@@ -208,6 +208,7 @@ send_one_packet(mac_callback_t sent, void *ptr)
       #ifdef NM
         if(!is_broadcast) {
           RIMESTATS_ADD(reliabletx);
+          txcnt++;
           set_tx_counter(txcnt);
         }
       #endif // NM
@@ -414,12 +415,13 @@ packet_input(void)
 #ifdef NM 
   linkaddr_copy(&tmp, packetbuf_addr(PACKETBUF_ADDR_SENDER));
   if (!linkaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_RECEIVER),
-                          &linkaddr_null)){
-	  // printf("**%d**\n", tmp.u8[RIMEADDR_SIZE_RDC-1]); 	  
+                          &linkaddr_null))
+  {
+	  //printf("**%d**\n", tmp.u8[RIMEADDR_SIZE_RDC-1]);
 		update_neigh();
 		set_rx_counter();
 	   
-   }
+  }
 #endif //NM
 
 /***************FORTH Modifications*****************/   
@@ -479,7 +481,7 @@ static struct mac_counters get_txrx_counters(void)
 void set_rx_counter(){	
    struct neighbours *n;
    //struct mac_counters cnt2return;
-//   rimeaddr_t tmp;
+   //rimeaddr_t tmp;
    
   
   
@@ -489,23 +491,23 @@ void set_rx_counter(){
    uint16_t listaddr;
    uint8_t rxcnt[MAX_NEIGHS];
    
-   for (i=0;i<MAX_NEIGHS;i++){
-	   rxcnt[i]=0;
-	   
-    }	   
+   for (i=0;i<MAX_NEIGHS;i++)
+   {
+	   rxcnt[i]=0;  
+   }	   
     listaddr = 0;
-   //  printf("%u**\n", listaddr); 
-	//cnt2return.txcnt = txcnt;	   
+    //printf("%u**\n", listaddr); 
+	  //cnt2return.txcnt = txcnt;	   
     i=0;
-   for(n = list_head(neighbours_list); n != NULL; n = list_item_next(n)) {
-	//memcpy(&tmp, &n->addr, sizeof(uip_lladdr_t));
-//each bit set to high now corresponds to the address of a neighbour node from which have've had received packets.
-	listaddr |= (1 << (n->node_id-1)) & 0xffff;
-	// printf("%u**%u**\n", (1 << (n->node_id-1)),listaddr); 
-	rxcnt[i++] = n->rxcounter;
-	
+   for(n = list_head(neighbours_list); n != NULL; n = list_item_next(n)) 
+   {
+	    //memcpy(&tmp, &n->addr, sizeof(uip_lladdr_t));
+      //each bit set to high now corresponds to the address of a neighbour node from which have've had received packets.
+      listaddr |= (1 << (n->node_id-1)) & 0xffff;
+	    //printf("%u**%u**\n", (1 << (n->node_id-1)),listaddr); 
+	    rxcnt[i++] = n->rxcounter;	
    }
-  //   printf("%u**\n", listaddr); 
+  //printf("%u**\n", listaddr); 
    
 	//return cnt2return;
 	mac_txrx_counter.listaddr = listaddr;
@@ -521,18 +523,26 @@ static void update_neigh(void)
 	linkaddr_t tmp;  
 	  
 	linkaddr_copy(&tmp, packetbuf_addr(PACKETBUF_ADDR_SENDER));
-	//  printf("**%d**\n", tmp.u8[RIMEADDR_SIZE_RDC-1]); 
-
+	//printf("**%d**\n", tmp.u8[RIMEADDR_SIZE_RDC-1]); 
+  
 	/* Check if we already know this neighbour. */
 	for(n = list_head(neighbours_list); n != NULL; n = list_item_next(n)) {
 
-		
-		if(n->node_id == tmp.u8[RIMEADDR_SIZE_RDC-1]) {
-			// printf("**%d**\n", tmp.u8[RIMEADDR_SIZE_RDC-1]); 
-
-			 /* Our neighbour was found, so we update the timeout. */
+		//if(n->node_id == tmp.u8[RIMEADDR_SIZE_RDC-1])
+    
+    /**
+     * TEMPORARY fix for the address of neighbors
+     * Needs Further TESTING
+     */
+    
+		if(n->node_id == tmp.u8[sizeof(tmp.u8)-1])
+    {
+      //printf("%d ", RIMEADDR_SIZE_RDC);
+      //printf("**%d**\n", tmp.u8[RIMEADDR_SIZE_RDC-1]); 
+			
+      /* Our neighbour was found, so we update the timeout. */
 			n->rxcounter++; 
-		//	ctimer_set(&n->ctimer, NEIGH_TIMEOUT, remove_neigh, n);
+		  //ctimer_set(&n->ctimer, NEIGH_TIMEOUT, remove_neigh, n);
 			break;
 		}
 	}
@@ -549,21 +559,33 @@ for now. */
     if(n != NULL) {
     /* Initialize the fields. */
    // rimeaddr_copy(&tmp, packetbuf_addr(PACKETBUF_ADDR_SENDER));
-    n->node_id = tmp.u8[RIMEADDR_SIZE_RDC-1];
+    
+    //n->node_id = tmp.u8[RIMEADDR_SIZE_RDC-1];
+    
+    /**
+     * TEMPORARY fix for the address of neighbors
+     * Needs further TESTING
+     */
+
+    n->node_id = tmp.u8[sizeof(tmp.u8)-1];
+
     n->rxcounter = 1;
     /* Place the child on the neighbour list at the end of the list. */
     list_add(neighbours_list, n);
-  //  ctimer_set(&n->ctimer, NEIGH_TIMEOUT, remove_neigh, n);		
+    //ctimer_set(&n->ctimer, NEIGH_TIMEOUT, remove_neigh, n);
 	//}
-	//printf("\n");
     //printf("neighbour %d added on my list!\n", n->node_id);
     }
    }
- /*  printf("My neighbours are: ");
-    for(n = list_head(neighbours_list); n != NULL; n = list_item_next(n)) {
-	 printf("%d  ", n->node_id);}
-	 printf("\n");
-   */
+   /**
+    * PRINT ALL THE NEIGHBORS IN THE LIST
+    **/
+   /*printf("My neighbours are: ");
+   for(n = list_head(neighbours_list); n != NULL; n = list_item_next(n))
+   {
+     printf("%d  ", n->node_id);
+   }
+   printf("\n");*/
 }
 
 /*
@@ -575,7 +597,7 @@ static void remove_neigh(void *n)
 {
   struct neighbours *e = n;
  //removing old items...
- //printf("now removing node: %d\n",e->addr.addr[5]);
+  //printf("now removing node: %d\n",e->addr.addr[5]);
   list_remove(neighbours_list, e);
   memb_free(&neighbours_list, e);
   

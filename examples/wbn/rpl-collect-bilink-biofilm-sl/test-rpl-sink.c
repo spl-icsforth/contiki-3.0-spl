@@ -161,7 +161,7 @@ tcpip_handler(void)
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */ 
     appdata = (uint8_t *)uip_appdata;
     rssi = do_rssi();	
-    lqi = do_lqi();
+    lqi  = do_lqi();
     mynf = get_nf();
     
 	 #ifdef NM	
@@ -170,6 +170,7 @@ tcpip_handler(void)
     //this is the piece of rx data in uint8t format
     //this is the id of the sender (as defined in compile time).
     #ifndef SERIAL_MODE
+		//printf("Data recv from %d:[", UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 2]);
         printf("192 %d %d ", UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 2], uip_datalen());
 		for (i=0;i<uip_datalen();i++)
 		{

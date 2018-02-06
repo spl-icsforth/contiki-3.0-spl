@@ -103,6 +103,20 @@ void uip_log(char *msg);
 #if UIP_STATISTICS == 1
 struct uip_stats uip_stat;
 #endif /* UIP_STATISTICS == 1 */
+
+/*---------------------------------------------------------------------------*/
+/* FORTH Modification                                            */
+/*---------------------------------------------------------------------------*/
+
+#ifdef TRACE_ROUTE
+	#include "nm-common.h"
+	#include "net/packetbuf.h"
+
+#endif
+/*---------------------------------------------------------------------------*/
+/* FORTH Modification                                            */
+/*---------------------------------------------------------------------------*/
+
  
 
 /*---------------------------------------------------------------------------*/
@@ -1202,8 +1216,23 @@ uip_process(uint8_t flag)
 #endif /* UIP_IPV6_CONF_MULTICAST */
 
   /* TBD Some Parameter problem messages */
+
+  /*---------------------------------------------------------------------------*/
+  /* FORTH Modification                                            */
+  /*---------------------------------------------------------------------------*/
+  #ifndef WITHSNIFFERMODE
+
   if(!uip_ds6_is_my_addr(&UIP_IP_BUF->destipaddr) &&
-     !uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr)) {
+     !uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr)) 
+  
+  #else
+    if(!uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr) &&
+	    !uip_ds6_is_my_addr(&UIP_IP_BUF->destipaddr) &&
+      !uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr))
+  
+  #endif
+    {
+
     if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr) &&
        !uip_is_addr_link_local(&UIP_IP_BUF->destipaddr) &&
        !uip_is_addr_link_local(&UIP_IP_BUF->srcipaddr) &&
@@ -1224,6 +1253,48 @@ uip_process(uint8_t flag)
         UIP_STAT(++uip_stat.ip.drop);
         goto send;
       }
+  
+
+/*---------------------------------------------------------------------------*/
+/* FORTH Modification                                            */
+/*---------------------------------------------------------------------------*/
+
+#if WITHSNIFFER_MODE	
+	sniffed_packet = 0;
+	
+ if (!linkaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_SENDER),
+                                         &linkaddr_node_addr) && 
+     !linkaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_RECEIVER),
+                                        &linkaddr_node_addr) && 
+     !linkaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_RECEIVER),
+                                         &linkaddr_null))// &&
+     //and another check for packets that have not been originated!)
+  {
+  //uint16_t ndx;
+  //printf("after decompression %u:", SICSLOWPAN_IP_BUF->len[1]);
+  //for (ndx = 0; ndx < SICSLOWPAN_IP_BUF->len[1] + 40; ndx++) {
+      //uint8_t data = ((uint8_t *) (SICSLOWPAN_IP_BUF))[ndx];
+       //printf("%d ", data);
+  //}
+    //printf("\n");
+		sniffed_packet = 1;
+		//printf("bbbbb\n"); 
+		#ifdef TRACE_ROUTE
+			nm_input(sniffed_packet);
+		#endif
+		
+		goto drop;
+} 
+#endif
+	
+#ifdef TRACE_ROUTE
+	nm_input(0);
+#endif
+
+/*---------------------------------------------------------------------------*/
+/* FORTH Modification                                            */
+/*---------------------------------------------------------------------------*/
+
 
 #if UIP_CONF_IPV6_RPL
       if(rpl_update_header_empty()) {
