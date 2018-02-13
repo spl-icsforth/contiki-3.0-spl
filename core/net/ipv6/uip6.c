@@ -1229,10 +1229,8 @@ uip_process(uint8_t flag)
     if(!uip_ds6_is_my_addr(&UIP_IP_BUF->srcipaddr) &&
 	    !uip_ds6_is_my_addr(&UIP_IP_BUF->destipaddr) &&
       !uip_ds6_is_my_maddr(&UIP_IP_BUF->destipaddr))
-  
   #endif
     {
-
     if(!uip_is_addr_mcast(&UIP_IP_BUF->destipaddr) &&
        !uip_is_addr_link_local(&UIP_IP_BUF->destipaddr) &&
        !uip_is_addr_link_local(&UIP_IP_BUF->srcipaddr) &&
@@ -1282,7 +1280,6 @@ uip_process(uint8_t flag)
 		#ifdef TRACE_ROUTE
 			nm_input(sniffed_packet);
 		#endif
-		
 		goto drop;
 } 
 #endif

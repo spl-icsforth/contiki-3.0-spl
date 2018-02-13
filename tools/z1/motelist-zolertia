@@ -17,11 +17,13 @@ options:
   -m  method to scan usb: procfs, sysfs, auto (default)
   -dev_prefix  force the device prefix for the serial device
   -usb  display extra usb information
+  -b  specify which Zolertia board to list (z1, remote, etc)
 EOF
 
 my %Opt = (
   compact => 0,
   usb => 0,
+  board => "",
   method => "auto",
   kernel => "auto",
   dev_prefix => [ "/dev/usb/tts/", "/dev/ttyUSB", "/dev/tts/USB" ],
@@ -38,6 +40,7 @@ while (@ARGV) {
   elsif( $opt eq "-m" ) { $Opt{method} = shift @ARGV; }
   elsif( $opt eq "-dev_prefix" ) { $Opt{dev_prefix} = shift @ARGV; }
   elsif( $opt eq "-usb" ) { $Opt{usb} = 1; }
+  elsif( $opt eq "-b" ) { $Opt{board} = shift @ARGV; }
   else { print STDERR "$help\nerror, unknown command line option $opt\n"; exit 1; }
 }
 
@@ -50,6 +53,16 @@ if( $Opt{method} eq "auto" ) {
   $Opt{method} = ($Opt{kernel} eq "2.4") ? "procfs" : "sysfs";
 }
 
+if( $Opt{board} eq "z1" ) {
+  $Opt{board} = "Zolertia Z1";
+} elsif( $Opt{board} eq "remote" ) {
+  $Opt{board} = "Zolertia RE-Mote platform";
+} elsif( $Opt{board} eq "firefly" ) {
+  $Opt{board} = "Zolertia Firefly platform";
+} elsif( $Opt{board} eq "orion" ) {
+  $Opt{board} = "Zolertia Orion Ethernet router";
+}
+
 my @devs = $Opt{method} eq "procfs" ? scan_procfs() : scan_sysfs();
 print_motelist( sort { cmp_usbdev($a,$b) } @devs );
 
@@ -59,24 +72,29 @@ print_motelist( sort { cmp_usbdev($a,$b) } @devs );
 #
 sub scan_sysfs {
 
-  #  Scan /sys/bus/usb/drivers/usb for FTDI devices
-  my @ftdidevs =
-    grep { ($_->{UsbVendor}||"") eq "10c4" && ($_->{UsbProduct}||"") eq "ea60" && ($_->{ProductString}||"") eq "Zolertia Z1" }
+  my $tmp = '($_->{UsbVendor}||"") eq "10c4" && ($_->{UsbProduct}||"") eq "ea60"';
+
+  if($Opt{board}) {
+    $tmp = '($_->{ProductString}||"") eq $Opt{board} && ' . $tmp
+  }
+
+  #  Scan /sys/bus/usb/drivers/usb for CP210x devices
+  my @cpdevs =
+    grep { eval "$tmp" }
     map { {
       SysPath => $_,
       UsbVendor => snarf("$_/idVendor",1),
       UsbProduct => snarf("$_/idProduct",1),
       ProductString => snarf("$_/product",1),
     } }
-    glob("/sys/bus/usb/drivers/usb/*");
+   glob("/sys/bus/usb/drivers/usb/*");
 
-  #  Gather information about each FTDI device
-  for my $f (@ftdidevs) {
+  #  Gather information about each CP210x device
+  for my $f (@cpdevs) {
     my $syspath = $f->{SysPath};
-
+    $f->{InfoSerial} = snarf("$syspath/serial",1);
     $f->{InfoManufacturer} = snarf("$syspath/manufacturer",1);
     $f->{InfoProduct} = snarf("$syspath/product",1);
-    $f->{InfoSerial} = snarf("$syspath/serial",1);
     $f->{UsbDevNum} = snarf("$syspath/devnum",1);
 
     my $devstr = readlink($syspath);
@@ -92,8 +110,7 @@ sub scan_sysfs {
     $f->{SerialDevNum} = $1 if $f->{SerialDevName} =~ /(\d+)/;
     $f->{SerialDevName} = getSerialDevName( $f->{SerialDevNum} ) || "  (none)";
   }
-
-  return @ftdidevs;
+  return @cpdevs;
 }
 
 
@@ -113,7 +130,7 @@ sub scan_procfs {
     $usbtree{usbkey($tts->{path})}{usbserial} = $tts if defined $tts->{path};
   }
 
-  my @ftdidevs = map { {
+  my @cpdevs = map { {
       UsbVendor => $_->{Vendor},
       UsbProduct => $_->{ProdID},
       InfoManufacturer => $_->{Manufacturer},
@@ -129,7 +146,7 @@ sub scan_procfs {
     grep { ($_->{Vendor}||"") eq "0403" && ($_->{ProdID}||"") eq "6001" }
     values %usbtree;
 
-  return @ftdidevs;
+  return @cpdevs;
 }
 
 sub build_usb_tree {
@@ -223,13 +240,15 @@ sub print_motelist {
   if( !$Opt{compact} ) {
     if( $Opt{usb} ) {
       print << "EOF" unless $Opt{compact};
-Bus Dev USB Path                 Reference  Device           Description
---- --- ------------------------ ---------- ---------------- -------------------------------------
+--- --- ------------------------ -------------- ---------------- -------------------------------------
+Bus Dev USB Path                 Reference      Device           Description
+--- --- ------------------------ -------------- ---------------- -------------------------------------
 EOF
     } else {
       print << "EOF" unless $Opt{compact};
-Reference  Device           Description
----------- ---------------- ---------------------------------------------
+-------------- ---------------- ---------------------------------------------
+Reference      Device           Description
+-------------- ---------------- ---------------------------------------------
 EOF
     }
   }
@@ -242,7 +261,7 @@ EOF
     if( $Opt{compact} ) {
       print join(",",@output) . "\n";
     } else {
-      printf( ($Opt{usb}?"%3d %3d %-24s ":"")."%-10s %-16s %s\n", @output );
+      printf( ($Opt{usb}?"%3d %3d %-24s ":"")."%-14s %-16s %s\n", @output );
     }
   }
 }

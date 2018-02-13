@@ -180,7 +180,16 @@
 #define UIP_CONF_BROADCAST       1
 #define UIP_ARCH_IPCHKSUM        1
 #define UIP_CONF_UDP             1
-#define UIP_CONF_UDP_CHECKSUMS   1
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+//If I want to check the packet for changes
+//for differences set this value to 1
+//@FORTH - 20180212
+#ifndef UIP_CONF_UDP_CHECKSUMS
+#define UIP_CONF_UDP_CHECKSUMS   0 //1
+#endif
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 #define UIP_CONF_PINGADDRCONF    0
 #define UIP_CONF_LOGGING         0
 

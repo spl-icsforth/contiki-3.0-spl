@@ -80,7 +80,6 @@ void update_uip6pck(int nwk_header)
 	int i,j;
 	int route_flag;
 	
-	
 //	if (UIP_IP_BUF->proto == UIP_PROTO_UDP) - in contrast to ipv4 (uip-over-rime)
 //	{
 		#ifdef TRACE_LQ
@@ -140,7 +139,6 @@ void update_uip6pck(int nwk_header)
 			i++;
 		}
 	
-		
 		i=0;
 		while (i<(MAX_NEIGHS-2))
 		{
@@ -216,6 +214,7 @@ void update_uip6pck(int nwk_header)
 		for (i=UIP_IPUDPH_LEN+nwk_header;i<UIP_IPUDPH_LEN+nwk_header+(MAX_NEIGHS-2)*2;i=i+2) {
 			uip_buf[i] = route_link[j] & 0xff; //lsb
 			uip_buf[i+1] = route_link[j] >> 8; //msb
+			//printf("uipbuf = %d, uipbuf+1 = %d\n",uip_buf[i], uip_buf[i+1]);
 			j++;
 			
 	    }
@@ -223,7 +222,7 @@ void update_uip6pck(int nwk_header)
 		j=0;
 		for (i=UIP_IPUDPH_LEN+nwk_header+(MAX_NEIGHS-2)*2;i<UIP_IPUDPH_LEN+nwk_header+(MAX_NEIGHS-2)*3;i++) {
 			uip_buf[i] = route_nf[j];
-			
+			//printf("nf = %d\n", uip_buf[i]);
 			j++;
 			
 	    }
@@ -232,6 +231,7 @@ void update_uip6pck(int nwk_header)
 		for (i=UIP_IPUDPH_LEN+nwk_header+(MAX_NEIGHS-2)*3;i<UIP_IPUDPH_LEN+nwk_header+TRACEROUTE_LEN*2+(MAX_NEIGHS-2)*3;i=i+2) {
 			uip_buf[i] = trace_route[j] >> 8; //msb
 			uip_buf[i+1] = trace_route[j] & 0xff; //lsb
+			//printf("trace_route = %d, trace_route+1 = %d \n", uip_buf[i],uip_buf[i+1]);
 			j++;
 			
 	    }
