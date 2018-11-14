@@ -159,6 +159,7 @@ tcpip_handler(void)
 	//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */ 
 
     cmd_type = (uint8_t *)uip_appdata;
+	printf("cmd: %d \n", cmd_type[0]);
     if (cmd_type[0] >240 && uip_datalen() == sizeof(struct cmd_request_t))
     {
 		//memcpy(&appdata,(struct cmd_request_t *)uip_appdata, sizeof(struct cmd_request_t));
@@ -435,7 +436,7 @@ PROCESS_THREAD(sensing_process, ev,data)
 	isrunning = 0;
 	
 	standby: 
-	//PROCESS_WAIT_EVENT_UNTIL(ev == cmd_event || (ev == sensors_event && data == &button_sensor ));
+	PROCESS_WAIT_EVENT_UNTIL(ev == cmd_event || (ev == sensors_event && data == &button_sensor ));
 	if (ev == cmd_event){	
 		memcpy(&incmd_req, data, sizeof(struct cmd_request_t));
 		//  printf("command now received: %d\n", incmd_req.cmd_index);

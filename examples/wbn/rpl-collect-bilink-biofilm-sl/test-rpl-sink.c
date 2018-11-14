@@ -83,13 +83,13 @@
 
 static struct uip_udp_conn *server_conn;
 PROCESS(udp_server_process, "UDP server process");
+
 #ifndef WITH_DL
 	AUTOSTART_PROCESSES(&udp_server_process, &nm_common_process);
 #else
 	PROCESS(udp_sendcmd_process, "UDP Send CMD process");
 	AUTOSTART_PROCESSES(&udp_server_process, &udp_sendcmd_process, &nm_common_process);
 #endif  //WITH_DL
-
 
 
 //functions definition
@@ -106,6 +106,7 @@ static uint16_t rssi;
 static uint8_t lqi;
 static uint8_t mynf;
 
+static int uart_rx_callback_0(unsigned char c);
 
 //static rimeaddr_t src_addr;
 
@@ -191,9 +192,9 @@ tcpip_handler(void)
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //method#2: transfer over the serial port (decimal values are not treated not as ascii characters!)
     
-    /*this will transfer ONLY the payload of the packet. In order to transfer additional information,
-    * the input arguments of the serial_tx_data need to be accordingly adjusted.
-    * (see test-blink.c for more details)
+    /* this will transfer ONLY the payload of the packet. In order to transfer additional information,
+    *  the input arguments of the serial_tx_data need to be accordingly adjusted.
+    *  (see test-blink.c for more details)
     */
     //note: this does not work on cooja!
     #else
@@ -217,7 +218,12 @@ void serial_tx_data(void * data2send, int datalen){
  	data_ptr=(uint8_t *)data2send;
  	
 
- 	
+ 	#ifdef SERIAL_TEST
+	 	leds_toggle(LEDS_GREEN);
+		slip_arch_writeb((char) 192);
+		return;
+	#else // NOT SERIAL TEST 
+
  	slip_arch_writeb((char)192); //start of serial frame
 	
  	//this is the id of the sender:
@@ -273,7 +279,9 @@ void serial_tx_data(void * data2send, int datalen){
 	}	
 	#endif
 	slip_arch_writeb((char)193); //end of serial frame
-
+	
+	#endif
+	
 	return;
 }
 
@@ -292,7 +300,7 @@ do_lqi(void)
 	return (uint8_t)packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY);	
 }
 #ifdef NM
-static struct mac_counters get_mac_counters()
+	static struct mac_counters get_mac_counters()
 {
 	
 	return NETSTACK_RDC.get_txrx_counters();
@@ -331,8 +339,8 @@ void send_command_request(struct cmd_request_t *aa, uip_ipaddr_t *destip)
 		uip_udp_packet_sendto(server_conn, msg, sizeof(struct cmd_request_t), destip, UIP_HTONS(UDP_CLIENT_PORT));	
 	}	
 }
-//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 #endif
+
 #endif
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_server_process, ev, data)
@@ -551,7 +559,6 @@ PROCESS_THREAD(udp_sendcmd_process, ev, data){
 		if (ev == event_data_ready && data !=NULL) {
 			memcpy(&cmd_msg, data, sizeof(struct cmd_request_t));
 			leds_toggle(LEDS_BLUE);
-			
 		  //  tl =get_nmlist_length();
 		
 		tl=0;
@@ -602,5 +609,4 @@ PROCESS_THREAD(udp_sendcmd_process, ev, data){
 	}
 
  #endif	
-	
 /**********************************************************/

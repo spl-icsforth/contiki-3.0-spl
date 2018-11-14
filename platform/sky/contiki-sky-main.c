@@ -294,7 +294,7 @@ main(int argc, char **argv)
   /* Restore node id if such has been stored in external mem */
   //2013-09-04 nancy@forth-ics
   #ifdef NODEID
-    node_id = NODEID
+    node_id = NODEID;
   #else
     node_id_restore();
   #endif
@@ -309,7 +309,16 @@ main(int argc, char **argv)
   }
 #endif
 
-  random_init(ds2411_id[0] + node_id);
+//2013-09-04 nancy@forth-ics
+#ifdef NODEID
+    ds2411_id[3] = node_id;
+    ds2411_id[4] = 0;
+    ds2411_id[5] = node_id;
+    ds2411_id[6] = node_id;
+    ds2411_id[7] = node_id;
+#else
+    random_init(ds2411_id[0] + node_id);
+#endif
   
   leds_off(LEDS_BLUE);
   /*

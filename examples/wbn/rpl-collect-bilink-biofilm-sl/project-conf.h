@@ -48,7 +48,7 @@
 #define NET_SIZE 16 //total!
 //We will not use the csma_uveg_driver right now
 //#define NETSTACK_CONF_MAC      csma_uveg_driver
-#define SINK_ID 1
+#define SINK_ID 16
 #define MAX_HTL 5
 #define MAX_CHILDREN 16
 #define MAX_NEIGHS 10

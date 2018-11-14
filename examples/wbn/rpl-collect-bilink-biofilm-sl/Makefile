@@ -37,12 +37,12 @@ CONTIKI_SOURCEFILES += nullrdc_dl.c
 
 ##unocomment to activate downlink communication...
 CFLAGS+= -DWITH_DL
-#TARGET_LIBFILES += -lm
+TARGET_LIBFILES += -lm
 #########################################################
 ###############################################################################
 #Set the ID of each node (currently: Sink->16, Sources:1-10, Relays: 11-15)
 #comment when testing at cooja:
-#CFLAGS+= -DNODEID=11
+CFLAGS+= -DNODEID=11
 
 ##for sink:
 #uncomment to write directly to serial port (no printf) for the data collection (Note: comment when testing at cooja)
@@ -56,5 +56,8 @@ CFLAGS+= -DWITH_DL
 #uncomment for connection with arduino pro - setting baudrate to 19200
 #CFLAGS+= -DBIOFILM
 ###############################################################################
+
+#flag for serial testing
+#CFLAGS+= -DSERIAL_TEST
 
 include $(CONTIKI)/Makefile.include
