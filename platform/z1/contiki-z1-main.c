@@ -214,8 +214,14 @@ main(int argc, char **argv)
    * Hardware initialization done!
    */
 
+  
+  #ifdef NODEID
+    node_id = NODEID;
+  #else
   /* Restore node id if such has been stored in external mem */
-  node_id_restore();
+    node_id_restore();
+  #endif
+  
 
   /* If no MAC address was burned, we use the node id or the Z1 product ID */
   if(!(node_mac[0] | node_mac[1] | node_mac[2] | node_mac[3] |
@@ -265,6 +271,17 @@ main(int argc, char **argv)
   }
 #endif /* IEEE_802154_MAC_ADDRESS */
 
+
+//2018-11-28 nancy@forth-ics
+#ifdef NODEID
+    node_mac[3] = node_id;
+    node_mac[4] = 0;
+    node_mac[5] = node_id;
+    node_mac[6] = node_id;
+    node_mac[7] = node_id;
+#else
+    random_init(node_mac[0] + node_id);
+#endif
   /*
    * Initialize Contiki and our processes.
    */
