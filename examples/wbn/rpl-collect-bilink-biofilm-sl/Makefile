@@ -42,7 +42,7 @@ TARGET_LIBFILES += -lm
 ###############################################################################
 #Set the ID of each node (currently: Sink->16, Sources:1-10, Relays: 11-15)
 #comment when testing at cooja:
-CFLAGS+= -DNODEID=11
+CFLAGS+= -DNODEID=3
 
 ##for sink:
 #uncomment to write directly to serial port (no printf) for the data collection (Note: comment when testing at cooja)

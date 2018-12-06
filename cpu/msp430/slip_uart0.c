@@ -49,18 +49,10 @@ slip_arch_writeb(unsigned char c)
  *
  */
 /*---------------------------------------------------------------------------*/
+#if NETSTACK_CONF_WITH_IPV4
 int
 putchar(int c)
 {
-
-/**
-    *FORTH MODIFICATIONS
-    *nancypan
-    *if was outside of function!
-*/
-printf("%d \n",NETSTACK_CONF_WITH_IPV4);
-#if NETSTACK_CONF_WITH_IPV4
-
 #define SLIP_END 0300
   static char debug_frame = 0;
 
@@ -82,17 +74,8 @@ printf("%d \n",NETSTACK_CONF_WITH_IPV4);
   }
 
   return c;
-  
-  /**
-    *FORTH MODIFICATIONS
-    *nancypan
-  */
-
-  #else
-    slip_arch_writeb((char) c);
-  #endif /* NETSTACK_CONF_WITH_IPV4 */
-
 }
+#endif /* NETSTACK_CONF_WITH_IPV4 */
 /*---------------------------------------------------------------------------*/
 /**
  * Initalize the RS232 port and the SLIP driver.
